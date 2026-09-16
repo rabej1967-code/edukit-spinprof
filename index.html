@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SPIn Analytics — Dashboard Prestasi Pelajar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary: #1a56db;
+      --primary-dark: #1240b0;
+      --primary-light: #e8efff;
+      --accent: #0ea5e9;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #7c3aed;
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --radius: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 30px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+
+    #mainWrapper { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── HEADER ─────────────────────────────────── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0 10px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .brand-logo svg { width: 20px; height: 20px; }
+    .brand-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .brand-name span { color: var(--primary); }
+    .brand-tag {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .header-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .meta-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .meta-badge input {
+      border: none;
+      background: transparent;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      width: 50px;
+      outline: none;
+    }
+    #saveStatus {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      background: #dcfce7;
+      color: #15803d;
+      border-radius: 6px;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* ── TOOLBAR ─────────────────────────────────── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      flex-wrap: wrap;
+    }
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 4px;
+    }
+    .toolbar-divider {
+      width: 1px;
+      height: 28px;
+      background: var(--border);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    .subject-area {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 8px 0;
+      border-top: 1px solid var(--border);
+    }
+    .subject-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .subject-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    /* ── BUTTONS ─────────────────────────────────── */
+    button {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn { padding: 7px 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
+    .btn:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+    .btn.active-mode { background: var(--primary); border-color: var(--primary); color: white; }
+
+    .btn-primary { padding: 7px 12px; background: var(--primary); color: white; box-shadow: 0 1px 3px rgba(26,86,219,0.3); }
+    .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 4px 10px rgba(26,86,219,0.35); }
+
+    .btn-success { padding: 7px 12px; background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; }
+
+    .btn-danger { padding: 7px 12px; background: var(--danger); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+
+    .btn-ghost { padding: 7px 12px; background: transparent; border: 1px dashed var(--border); color: var(--text-muted); }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+    .btn-pdf { padding: 7px 12px; background: #fff8f0; border: 1px solid #fed7aa; color: #c2410c; }
+    .btn-pdf:hover { background: #ffedd5; }
+
+    .subject-btn {
+      padding: 5px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .subject-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .subject-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+    select {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface);
+      cursor: pointer;
+      outline: none;
+    }
+    select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+
+    /* ── CONTENT ─────────────────────────────────── */
+    .content { flex: 1; overflow-y: auto; padding: 16px 20px; }
+    .content::-webkit-scrollbar { width: 6px; }
+    .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── TABLE ─────────────────────────────────── */
+    .table-wrapper {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th {
+      background: var(--text);
+      color: white;
+      padding: 11px 10px;
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+    th:first-child { min-width: 180px; text-align: left; padding-left: 16px; }
+    th:nth-child(2) { min-width: 80px; }
+    th:nth-child(3), th:nth-child(4) { min-width: 75px; }
+    th:nth-child(n+5) { min-width: 70px; }
+
+    td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: center; font-size: 12px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+    tr:hover td:first-child { background: var(--primary-light); }
+
+    .cell-good { background: #d1fae5; color: #065f46; font-weight: 600; }
+    .cell-mid { background: #fef3c7; color: #92400e; font-weight: 600; }
+    .cell-bad { background: #fee2e2; color: #991b1b; font-weight: 600; }
+
+    table input {
+      width: 52px;
+      padding: 5px 6px;
+      border: 1.5px solid var(--border);
+      border-radius: 5px;
+      text-align: center;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      background: transparent;
+      transition: all 0.15s;
+    }
+    table input:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-light); font-size: 14px; padding: 3px 5px;
+      border-radius: 4px; transition: all 0.15s;
+    }
+    .icon-btn:hover { color: var(--primary); background: var(--primary-light); }
+    .icon-btn-delete:hover { color: var(--danger) !important; background: #fee2e2; }
+
+    .summary-row td { background: var(--surface2) !important; font-weight: 700; border-top: 2px solid var(--border); }
+
+    /* ── DASHBOARD CARDS ─────────────────────────────────── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin-top: 0;
+    }
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: var(--shadow-lg); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-icon svg { width: 15px; height: 15px; }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .card-body { padding: 14px 16px; }
+    .card-content { max-height: 220px; overflow-y: auto; }
+    .card-content::-webkit-scrollbar { width: 4px; }
+    .card-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-bottom: none; }
+    .stat-label { color: var(--text); font-weight: 500; }
+    .stat-value { font-weight: 700; color: var(--primary); font-family: 'DM Mono', monospace; }
+
+    .bar-wrapper { margin-bottom: 10px; }
+    .bar-label { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .bar-container { background: var(--border); height: 26px; border-radius: 6px; overflow: hidden; }
+    .bar-fill {
+      height: 100%;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 10px;
+      color: white; font-weight: 700; font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      min-width: 50px;
+      border-radius: 6px;
+    }
+
+    .heatmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 6px; }
+    .heatmap-cell {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 9px; color: white; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .heatmap-cell:hover { transform: scale(1.08); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+    .heatmap-cell .hc-name { font-size: 10px; font-weight: 700; }
+    .heatmap-cell .hc-kelas { font-size: 9px; opacity: 0.85; }
+    .heatmap-cell .hc-score { font-size: 14px; font-weight: 800; font-family: 'DM Mono', monospace; }
+
+    .no-data { color: var(--text-light); font-size: 12px; text-align: center; padding: 20px; font-style: italic; }
+
+    /* ── MODAL ─────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.5);
+      backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: var(--surface);
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      max-width: 440px;
+      width: 90%;
+      border: 1px solid var(--border);
+    }
+    .modal-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .modal-message { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+    .modal-input {
+      width: 100%; padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 13px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin-bottom: 16px; display: none;
+      transition: all 0.15s;
+    }
+    .modal-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,86,219,0.12); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── TOAST ─────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--text);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 9999;
+      animation: toastIn 0.25s ease;
+    }
+    @keyframes toastIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────── */
+    @media (max-width: 768px) {
+      .header { padding: 0 12px; }
+      .content { padding: 12px; }
+      .dashboard { grid-template-columns: 1fr; }
+      .brand-name { font-size: 15px; }
+      .toolbar { gap: 5px; }
+    }
+  </style>
+</head>
+<body>
+<div id="loginScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f2d7a,#1a56db);padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+    <div style="text-align:center;margin-bottom:22px;">
+      <div style="font-size:22px;font-weight:800;color:#0f172a;">SP<span style="color:#1a56db">In</span> Analytics</div>
+      <div style="font-size:12px;color:#64748b;">Dashboard Prestasi Pelajar</div>
+    </div>
+    <div id="loginErr" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:12px;"></div>
+    <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">NAMA PENGGUNA</div>
+    <input id="lgUser" type="text" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1px solid #cbd5e1;margin-bottom:12px;font-size:14px;" autocomplete="username">
+    <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">KATA LALUAN</div>
+    <input id="lgPass" type="password" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1px solid #cbd5e1;margin-bottom:16px;font-size:14px;" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()" style="width:100%;padding:12px;background:#1a56db;color:#fff;border:none;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;">Log Masuk →</button>
+  </div>
+</div>
+
+<div id="pwScreen" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f2d7a,#1a56db);padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+    <div style="font-size:17px;font-weight:800;margin-bottom:6px;">Set Kata Laluan Baru</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Kali pertama log masuk — sila tetapkan kata laluan baru.</div>
+    <div id="pwErr" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:12px;"></div>
+    <input id="pwNew" type="password" placeholder="Kata laluan baru (min. 6 aksara)" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1px solid #cbd5e1;margin-bottom:10px;font-size:14px;">
+    <input id="pwConf" type="password" placeholder="Sahkan kata laluan" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1px solid #cbd5e1;margin-bottom:16px;font-size:14px;">
+    <button onclick="submitNewPw()" style="width:100%;padding:12px;background:#1a56db;color:#fff;border:none;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;">Simpan & Teruskan →</button>
+  </div>
+</div>
+
+<div id="mainWrapper" style="display:none;">
+
+  <!-- HEADER -->
+  <div class="header">
+
+    <div class="header-top">
+      <!-- Brand -->
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">SP<span>In</span> Analytics</div>
+          <div class="brand-tag">Sistem Penilaian Integrasi</div>
+        </div>
+      </div>
+
+      <!-- Right: Year + Status -->
+      <div class="header-meta-row">
+        <div class="meta-badge" style="gap:4px;padding:4px 8px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);">TAHUN</span>
+          <select id="tahunSelect" onchange="switchTahun(this.value)" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;border:none;background:transparent;color:var(--primary);cursor:pointer;outline:none;padding:2px 4px;min-width:50px;"></select>
+          <button onclick="tambahTahun()" title="Tambah tahun baharu" style="background:var(--primary-light);border:1px solid var(--primary);color:var(--primary);border-radius:5px;padding:2px 7px;font-size:13px;font-weight:700;line-height:1;cursor:pointer;">+</button>
+          <button onclick="padamTahun()" title="Padam tahun ini" style="background:#fee2e2;border:1px solid #fca5a5;color:var(--danger);border-radius:5px;padding:2px 7px;font-size:13px;font-weight:700;line-height:1;cursor:pointer;">−</button>
+        </div>
+        <span id="saveStatus">✓ Tersimpan</span>
+        <button onclick="doLogout()" title="Log Keluar" style="background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">Log Keluar</button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR ROW 1 -->
+    <div class="toolbar">
+      <!-- Mode -->
+      <div class="toolbar-group">
+        <button class="btn active-mode" id="btnModeKelas" onclick="setMode('kelas')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Kelas
+        </button>
+        <button class="btn" id="btnModeMulti" onclick="setMode('multi')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Multi-Kelas
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <!-- Class select + Add -->
+      <select id="kelasSelect" onchange="renderAll()"></select>
+      <button class="btn-primary" onclick="tambahKelas()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Kelas
+      </button>
+      <button class="btn-primary" onclick="tambahPelajar()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Pelajar
+      </button>
+      <button class="btn-primary" onclick="tambahUjian()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ujian
+      </button>
+
+      <div class="toolbar-divider"></div>
+
+      <!-- Actions -->
+      <button class="btn" onclick="importCSV()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Import
+      </button>
+      <button class="btn-pdf" onclick="pdfKelas()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PDF Kelas
+      </button>
+      <button class="btn-pdf" onclick="pdfMulti()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PDF Multi
+      </button>
+      <button class="btn" onclick="pdfFull(event)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+        Laporan Penuh
+      </button>
+      <button class="btn" onclick="editGred()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Tetapan Gred
+      </button>
+      <button class="btn-danger" onclick="resetKelas()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Reset
+      </button>
+      <div class="toolbar-divider"></div>
+      <button class="btn-success" onclick="saveData()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Simpan
+      </button>
+      <button class="btn" onclick="exportJSON()" title="Eksport semua data sebagai fail .json">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Eksport
+      </button>
+      <button class="btn" onclick="document.getElementById('jsonFileInput').click()" title="Import data daripada fail .json">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Import JSON
+      </button>
+    </div>
+
+    <!-- SUBJECT TABS -->
+    <div class="subject-area">
+      <span class="subject-label">Subjek</span>
+      <div class="subject-tabs" id="subjectList"></div>
+      <button class="btn-ghost" onclick="tambahSubjek()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambah Subjek
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <div class="table-container">
+        <table>
+          <thead id="thead"></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ANALYTICS CARDS -->
+    <div class="dashboard">
+
+      <div class="card">
+        <div class="card-header" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="card-icon" style="background:#eff6ff">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a56db" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <span class="card-title">Trend Ujian</span>
+          </div>
+          <select id="trendChartType" onchange="changeTrendChart(this.value)" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);color:var(--text-muted);background:var(--surface2);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;">
+            <option value="line">Garisan</option>
+            <option value="bar">Bar</option>
+            <option value="pie">Pai</option>
+          </select>
+        </div>
+        <div class="card-body"><canvas id="trendChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="card-icon" style="background:#f0fdf4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg>
+            </div>
+            <span class="card-title">Analisis Gred</span>
+          </div>
+          <select id="gradeChartType" onchange="changeGradeChart(this.value)" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);color:var(--text-muted);background:var(--surface2);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;">
+            <option value="bar">Bar</option>
+            <option value="pie">Pai</option>
+            <option value="line">Garisan</option>
+          </select>
+        </div>
+        <div class="card-body"><canvas id="gradeChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background:#fefce8">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <span class="card-title">Ranking Pelajar</span>
+        </div>
+        <div class="card-body card-content" id="ranking"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background:#f0f4ff">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <span class="card-title">Indeks Prestasi</span>
+        </div>
+        <div class="card-body" id="indeks"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background:#fff1f2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <span class="card-title">Pelajar Berisiko</span>
+        </div>
+        <div class="card-body card-content" id="risiko"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background:#f0fdf4">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          </div>
+          <span class="card-title">Prestasi Meningkat</span>
+        </div>
+        <div class="card-body card-content" id="improve"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background:#fff7ed">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+          </div>
+          <span class="card-title">Prestasi Menurun</span>
+        </div>
+        <div class="card-body card-content" id="decline"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background:#fdf4ff">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <span class="card-title">Heatmap Prestasi</span>
+        </div>
+        <div class="card-body"><div id="heatmap" class="heatmap"></div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-message" id="modalMessage"></div>
+    <input type="text" id="modalInput" class="modal-input" placeholder="">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" id="confirmBtn" onclick="confirmModal()">Sahkan</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleFileUpload(event)">
+<input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="importJSON(event)">
+
+<script>
+  var SB_URL='https://aowzftmdriukxbltjtpm.supabase.co';
+  var SB_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvd3pmdG1kcml1a3hibHRqdHBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NzAxOTQsImV4cCI6MjA5NDQ0NjE5NH0.17lKaGC-9jx1cDORx2btwfmzDYon3s3CN2dei2BM-Ac';
+  var SP_SKEY='spinpro_sess_v1';
+  var SP_SESS=null, SP_CU=null, SP_KOD=null;
+
+  function getKodFromUrl(){
+    var m = new URLSearchParams(window.location.search).get('t');
+    return m ? m.trim() : null;
+  }
+  function saveSpSess(){ localStorage.setItem(SP_SKEY, JSON.stringify(SP_SESS)); }
+  function loadSpSess(){ try{ return JSON.parse(localStorage.getItem(SP_SKEY)); }catch(e){ return null; } }
+  function clearSpSess(){ localStorage.removeItem(SP_SKEY); }
+
+  function makeEmail(username, kodSekolah){
+    var u = username.trim().toLowerCase().replace(/[^a-z0-9_.]/g,'');
+    var k = kodSekolah.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+    return u+'.'+k+'@cikgukita.internal';
+  }
+
+  async function sbFetch(path, opts){
+    opts = opts || {};
+    var headers = Object.assign({'apikey':SB_ANON_KEY,'Content-Type':'application/json'}, opts.headers||{});
+    headers['Authorization'] = 'Bearer ' + ((SP_SESS && SP_SESS.access_token) ? SP_SESS.access_token : SB_ANON_KEY);
+    return fetch(SB_URL+path, Object.assign({}, opts, {headers:headers}));
+  }
+
+  async function doLogin(){
+    var u = document.getElementById('lgUser').value.trim();
+    var p = document.getElementById('lgPass').value;
+    var errEl = document.getElementById('loginErr');
+    errEl.style.display='none';
+    var kod = getKodFromUrl();
+    if(!kod){ errEl.textContent='URL tiada kod sekolah (?t=KODSEKOLAH).'; errEl.style.display='block'; return; }
+    if(!u || !p){ errEl.textContent='Sila isi nama pengguna dan kata laluan.'; errEl.style.display='block'; return; }
+    var email = makeEmail(u, kod);
+    try{
+      var res = await fetch(SB_URL+'/auth/v1/token?grant_type=password', {
+        method:'POST',
+        headers:{'apikey':SB_ANON_KEY,'Content-Type':'application/json'},
+        body: JSON.stringify({email:email, password:p})
+      });
+      var d = await res.json();
+      if(!res.ok){ errEl.textContent = d.msg || d.error_description || 'ID atau kata laluan tidak sah.'; errEl.style.display='block'; return; }
+      SP_SESS = {access_token:d.access_token, refresh_token:d.refresh_token, user_id:d.user.id};
+      saveSpSess();
+      await afterLogin();
+    }catch(e){
+      errEl.textContent = 'Ralat sambungan. Cuba lagi.'; errEl.style.display='block';
+    }
+  }
+
+  async function afterLogin(){
+    var res = await sbFetch('/rest/v1/spinpro_users?select=username,fullname,role,kod_sekolah,must_change_password&user_id=eq.'+SP_SESS.user_id, {method:'GET'});
+    var rows = await res.json();
+    if(!rows || !rows[0]){ document.getElementById('loginErr').textContent='Akaun tidak dijumpai untuk app ini.'; document.getElementById('loginErr').style.display='block'; return; }
+    SP_CU = rows[0];
+    SP_KOD = SP_CU.kod_sekolah;
+    if(SP_CU.must_change_password){ showPwScreen(); return; }
+    await enterApp();
+  }
+
+  function showPwScreen(){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('pwScreen').style.display='flex';
+  }
+
+  async function submitNewPw(){
+    var nw = document.getElementById('pwNew').value, cf = document.getElementById('pwConf').value;
+    var errEl = document.getElementById('pwErr');
+    errEl.style.display='none';
+    if(nw.length < 6){ errEl.textContent='Kata laluan minimum 6 aksara.'; errEl.style.display='block'; return; }
+    if(nw !== cf){ errEl.textContent='Kata laluan tidak sepadan.'; errEl.style.display='block'; return; }
+    var res = await sbFetch('/auth/v1/user', {method:'PUT', body: JSON.stringify({password:nw})});
+    if(!res.ok){ var d = await res.json(); errEl.textContent = d.msg || 'Gagal tukar kata laluan. Cuba lagi.'; errEl.style.display='block'; return; }
+    await sbFetch('/rest/v1/spinpro_users?user_id=eq.'+SP_SESS.user_id, {method:'PATCH', headers:{'Prefer':'return=minimal'}, body: JSON.stringify({must_change_password:false})});
+    SP_CU.must_change_password = false;
+    await enterApp();
+  }
+
+  async function enterApp(){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('pwScreen').style.display='none';
+    document.getElementById('mainWrapper').style.display='block';
+    await loadData();
+    updateTahunSelect();
+    updateSelect();
+    renderSubjectList();
+    renderAll();
+  }
+
+  function doLogout(){
+    clearSpSess();
+    location.reload();
+  }
+
+  async function tryResumeSession(){
+    SP_SESS = loadSpSess();
+    if(SP_SESS && SP_SESS.access_token){
+      await afterLogin();
+    }
+  }
+</script>
+<script>
+  Chart.register(ChartDataLabels);
+
+  // ── Data Structure ──
+  // allData = { "2025": { subjects: {...}, currentSubject: "..." }, "2024": {...} }
+  let allData = {};
+  let currentTahun = '2025';
+  let subjects = {};
+  let currentSubject = null;
+  let mode = 'kelas';
+  let saveMode = 'auto';
+  let modalCallback = null;
+  let trendChart = null;
+  let gradeChart = null;
+
+  const gradeRange = {
+    'A+': 90, 'A': 85, 'A-': 80,
+    'B+': 75, 'B': 70, 'C+': 65,
+    'C': 60, 'D': 50, 'E': 0, 'G': -1
+  };
+
+  const num = (v) => isNaN(Number(v)) ? 0 : Number(v);
+  const avg = (arr) => {
+    const validMarks = arr.filter(m => num(m) > 0);
+    return validMarks.length === 0 ? 0 : validMarks.reduce((a, b) => a + num(b), 0) / validMarks.length;
+  };
+  const getValidAverage = (marks) => {
+    const valid = marks.map(m => num(m)).filter(m => m > 0);
+    return valid.length === 0 ? 0 : valid.reduce((a, b) => a + b) / valid.length;
+  };
+  const gred = (v) => {
+    const order = ['A+', 'A', 'A-', 'B+', 'B', 'C+', 'C', 'D', 'E'];
+    return order.find(g => v >= gradeRange[g]) || 'G';
+  };
+  const warna = (v) => {
+    const g = gred(v);
+    return ['A+', 'A', 'A-'].includes(g) ? 'cell-good' : ['B+', 'B', 'C+', 'C'].includes(g) ? 'cell-mid' : 'cell-bad';
+  };
+  const getColor = (v) => v >= 75 ? '#10b981' : v >= 60 ? '#f59e0b' : '#ef4444';
+
+  function showModal(title, message, type = 'confirm', placeholder = '') {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById('modalOverlay');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+      const inputEl = document.getElementById('modalInput');
+      if (type === 'input') {
+        inputEl.style.display = 'block';
+        // If placeholder starts with 'VAL:', treat it as a pre-filled value
+        if (placeholder && placeholder.startsWith('VAL:')) {
+          inputEl.value = placeholder.slice(4);
+          inputEl.placeholder = '';
+        } else {
+          inputEl.value = '';
+          inputEl.placeholder = placeholder;
+        }
+        setTimeout(() => { inputEl.focus(); inputEl.select(); }, 100);
+      } else {
+        inputEl.style.display = 'none';
+      }
+      modalCallback = (confirmed) => {
+        overlay.style.display = 'none';
+        resolve(confirmed ? (type === 'input' ? inputEl.value.trim() : true) : null);
+      };
+      overlay.style.display = 'flex';
+    });
+  }
+
+  function closeModal() { if (modalCallback) modalCallback(false); }
+  function confirmModal() { if (modalCallback) modalCallback(true); }
+
+  document.getElementById('modalInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') confirmModal();
+  });
+
+  function getDefaultSubjects() {
+    return {
+      'Matematik': {
+        kelasData: {
+          '5A': [
+            { nama: 'Ahmad Ali', kelas: '5A', markah: [85, 78] },
+            { nama: 'Fatimah Hassan', kelas: '5A', markah: [92, 88] },
+            { nama: 'Muhammad Hafiz', kelas: '5A', markah: [45, 52] }
+          ],
+          '5B': [
+            { nama: 'Razak Ismail', kelas: '5B', markah: [55, 60] },
+            { nama: 'Aminah Yusof', kelas: '5B', markah: [78, 82] }
+          ]
+        },
+        ujian: ['Ujian 1', 'Ujian 2']
+      }
+    };
+  }
+
+  async function loadData() {
+    try {
+      var res = await sbFetch('/rest/v1/spinpro_school_data?kod_sekolah=eq.'+encodeURIComponent(SP_KOD)+'&select=data', {method:'GET'});
+      var rows = await res.json();
+      var stored = (rows && rows[0]) ? rows[0].data : null;
+      if (stored && Object.keys(stored).length) {
+        allData = stored.allData || {};
+        currentTahun = stored.currentTahun || Object.keys(allData)[0] || '2025';
+        saveMode = stored.saveMode || 'auto';
+      }
+    } catch (e) { console.error('Load error:', e); }
+
+    if (Object.keys(allData).length === 0) {
+      allData['2025'] = { subjects: getDefaultSubjects(), currentSubject: 'Matematik' };
+      currentTahun = '2025';
+    }
+
+    if (!allData[currentTahun]) currentTahun = Object.keys(allData)[0];
+
+    subjects = allData[currentTahun].subjects;
+    currentSubject = allData[currentTahun].currentSubject;
+    if (!currentSubject || !subjects[currentSubject]) currentSubject = Object.keys(subjects)[0] || null;
+  }
+
+  async function saveData() {
+    allData[currentTahun].subjects = subjects;
+    allData[currentTahun].currentSubject = currentSubject;
+    var payload = { allData, currentTahun, saveMode };
+    try {
+      await sbFetch('/rest/v1/spinpro_school_data', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ kod_sekolah: SP_KOD, data: payload, updated_at: new Date().toISOString() })
+      });
+      var status = document.getElementById('saveStatus');
+      status.textContent = '✓ Tersimpan';
+      status.style.background = '#dcfce7';
+      status.style.color = '#15803d';
+      showToast('Data tersimpan (dikongsi sekolah)');
+    } catch (e) {
+      showToast('Gagal simpan - semak sambungan internet');
+    }
+  }
+
+  function updateTahunSelect() {
+    const sel = document.getElementById('tahunSelect');
+    const years = Object.keys(allData).sort((a, b) => b - a);
+    sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    sel.value = currentTahun;
+  }
+
+  function switchTahun(tahun) {
+    // Save current before switching
+    allData[currentTahun].subjects = subjects;
+    allData[currentTahun].currentSubject = currentSubject;
+
+    currentTahun = tahun;
+    subjects = allData[tahun].subjects;
+    currentSubject = allData[tahun].currentSubject;
+    if (!currentSubject || !subjects[currentSubject]) currentSubject = Object.keys(subjects)[0] || null;
+
+    if (trendChart) { trendChart.destroy(); trendChart = null; }
+    if (gradeChart) { gradeChart.destroy(); gradeChart = null; }
+
+    updateTahunSelect();
+    updateSelect();
+    renderSubjectList();
+    renderAll();
+    saveData();
+    showToast(`Beralih ke tahun ${tahun}`);
+  }
+
+  function tambahTahun() {
+    const nextYear = (parseInt(currentTahun) + 1).toString();
+    showModal('Tambah Tahun', 'Masukkan tahun (contoh: 2026):', 'input', 'VAL:' + nextYear).then(tahun => {
+      if (!tahun) return;
+      tahun = tahun.trim();
+      if (!tahun || isNaN(Number(tahun))) return showToast('Tahun tidak sah');
+      if (allData[tahun]) return showToast('Tahun ' + tahun + ' sudah wujud');
+      allData[tahun] = { subjects: {}, currentSubject: null };
+      currentTahun = tahun;
+      subjects = allData[tahun].subjects;
+      currentSubject = null;
+
+      if (trendChart) { trendChart.destroy(); trendChart = null; }
+      if (gradeChart) { gradeChart.destroy(); gradeChart = null; }
+
+      updateTahunSelect();
+      updateSelect();
+      renderSubjectList();
+      renderAll();
+      saveData();
+      showToast(`Tahun ${tahun} ditambah`);
+    });
+  }
+
+  function padamTahun() {
+    const years = Object.keys(allData);
+    if (years.length <= 1) return showToast('Sekurang-kurangnya 1 tahun diperlukan');
+    showModal('Padam Tahun', `Padam semua data tahun ${currentTahun}? Tindakan tidak boleh dibuat semula.`, 'confirm').then(ok => {
+      if (!ok) return;
+      delete allData[currentTahun];
+      currentTahun = Object.keys(allData).sort((a,b) => b-a)[0];
+      subjects = allData[currentTahun].subjects;
+      currentSubject = allData[currentTahun].currentSubject;
+
+      if (trendChart) { trendChart.destroy(); trendChart = null; }
+      if (gradeChart) { gradeChart.destroy(); gradeChart = null; }
+
+      updateTahunSelect();
+      updateSelect();
+      renderSubjectList();
+      renderAll();
+      saveData();
+      showToast(`Tahun dipadamkan`);
+    });
+  }
+
+  function exportJSON() {
+    const blob = new Blob([JSON.stringify({ allData, currentTahun, saveMode }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `SPIn_Backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    showToast('Data dieksport sebagai fail .json');
+  }
+
+  function importJSON(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = JSON.parse(evt.target.result);
+        if (!data.allData) return showToast('Format fail tidak sah');
+        showModal('Import Data', 'Ini akan GANTIKAN semua data sedia ada. Teruskan?', 'confirm').then(ok => {
+          if (!ok) return;
+          allData = data.allData;
+          currentTahun = data.currentTahun || Object.keys(allData).sort((a,b) => b-a)[0];
+          saveMode = data.saveMode || 'auto';
+          subjects = allData[currentTahun].subjects;
+          currentSubject = allData[currentTahun].currentSubject;
+          if (!currentSubject) currentSubject = Object.keys(subjects)[0] || null;
+
+          if (trendChart) { trendChart.destroy(); trendChart = null; }
+          if (gradeChart) { gradeChart.destroy(); gradeChart = null; }
+
+          updateTahunSelect();
+          updateSelect();
+          renderSubjectList();
+          renderAll();
+          saveData();
+          showToast('Import berjaya');
+        });
+      } catch(e) { showToast('Ralat membaca fail JSON'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = '✓ ' + message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+
+  function getCurrentData() {
+    return subjects[currentSubject] || { kelasData: {}, ujian: [] };
+  }
+
+  function tambahSubjek() {
+    showModal('Subjek Baharu', 'Masukkan nama subjek:', 'input', 'cth: Bahasa Melayu').then(name => {
+      if (!name) return;
+      if (subjects[name]) return showModal('Ralat', 'Subjek ini sudah wujud.', 'confirm');
+      subjects[name] = { kelasData: {}, ujian: [] };
+      currentSubject = name;
+      saveData(); renderSubjectList(); renderAll();
+    });
+  }
+
+  function renderSubjectList() {
+    const list = document.getElementById('subjectList');
+    list.innerHTML = Object.keys(subjects).map(s => `
+      <div style="display:flex;align-items:center;gap:2px;">
+        <button class="subject-btn ${s === currentSubject ? 'active' : ''}" onclick="switchSubject('${s}')">${s}</button>
+        <button class="icon-btn icon-btn-delete" onclick="deleteSubject('${s}')" title="Padam Subjek" style="font-size:11px;padding:2px 4px;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function deleteSubject(s) {
+    showModal('Padam Subjek', `Padam subjek "${s}"? Semua data akan hilang.`, 'confirm').then(ok => {
+      if (!ok) return;
+      delete subjects[s];
+      if (currentSubject === s) {
+        currentSubject = Object.keys(subjects)[0] || null;
+        // nothing extra needed
+      }
+      updateSelect(); renderSubjectList(); renderAll(); saveData();
+      showToast(`Subjek "${s}" telah dipadamkan`);
+    });
+  }
+
+  function switchSubject(s) {
+    currentSubject = s;
+    allData[currentTahun].currentSubject = s;
+    updateSelect(); renderSubjectList(); renderAll(); saveData();
+  }
+
+  function tambahKelas() {
+    showModal('Tambah Kelas', 'Nama kelas:', 'input', 'cth: 5A').then(k => {
+      if (!k) return;
+      getCurrentData().kelasData[k] = [];
+      updateSelect(); renderAll();
+      if (saveMode === 'auto') saveData();
+    });
+  }
+
+  function tambahPelajar() {
+    showModal('Tambah Pelajar', 'Nama pelajar:', 'input', 'Nama penuh').then(n => {
+      if (!n) return;
+      const subject = getCurrentData();
+      const k = document.getElementById('kelasSelect').value;
+      subject.kelasData[k].push({ nama: n, kelas: k, markah: subject.ujian.map(() => 0) });
+      renderAll();
+      if (saveMode === 'auto') saveData();
+    });
+  }
+
+  function tambahUjian() {
+    showModal('Tambah Ujian', 'Nama ujian:', 'input', 'cth: Ujian 1').then(u => {
+      if (!u) return;
+      const subject = getCurrentData();
+      subject.ujian.push(u);
+      Object.values(subject.kelasData).forEach(k => k.forEach(p => p.markah.push(0)));
+      renderAll();
+      if (saveMode === 'auto') saveData();
+    });
+  }
+
+  function editUjian(i) {
+    const subject = getCurrentData();
+    showModal('Edit Ujian', 'Nama ujian baharu:', 'input', subject.ujian[i]).then(newName => {
+      if (!newName || newName === subject.ujian[i]) return;
+      subject.ujian[i] = newName;
+      renderAll();
+      if (saveMode === 'auto') saveData();
+    });
+  }
+
+  function deleteUjian(i) {
+    showModal('Padam Ujian', 'Semua markah ujian ini akan dipadamkan.', 'confirm').then(ok => {
+      if (!ok) return;
+      const subject = getCurrentData();
+      subject.ujian.splice(i, 1);
+      Object.values(subject.kelasData).forEach(k => k.forEach(p => p.markah.splice(i, 1)));
+      renderAll();
+      if (saveMode === 'auto') saveData();
+    });
+  }
+
+  function editPelajar(k, n) {
+    showModal('Edit Pelajar', 'Nama baharu:', 'input', n).then(newName => {
+      if (!newName || newName === n) return;
+      const p = getCurrentData().kelasData[k].find(x => x.nama === n);
+      if (p) { p.nama = newName; renderAll(); if (saveMode === 'auto') saveData(); }
+    });
+  }
+
+  function deletePelajar(k, n) {
+    showModal('Padam Pelajar', `Padam ${n} daripada kelas ${k}?`, 'confirm').then(ok => {
+      if (!ok) return;
+      const subject = getCurrentData();
+      const idx = subject.kelasData[k].findIndex(x => x.nama === n);
+      if (idx !== -1) { subject.kelasData[k].splice(idx, 1); renderAll(); if (saveMode === 'auto') saveData(); showToast(`${n} dipadamkan`); }
+    });
+  }
+
+  function resetKelas() {
+    const k = document.getElementById('kelasSelect').value;
+    showModal('Reset Kelas', `Reset semua data kelas ${k}?`, 'confirm').then(ok => {
+      if (!ok) return;
+      getCurrentData().kelasData[k] = [];
+      renderAll();
+      if (saveMode === 'auto') saveData();
+    });
+  }
+
+  function updateSelect() {
+    const select = document.getElementById('kelasSelect');
+    const current = select.value;
+    const klases = Object.keys(getCurrentData().kelasData);
+    select.innerHTML = klases.map(k => `<option value="${k}" ${current === k ? 'selected' : ''}>${k}</option>`).join('');
+  }
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('btnModeKelas').classList.toggle('active-mode', m === 'kelas');
+    document.getElementById('btnModeMulti').classList.toggle('active-mode', m === 'multi');
+    renderAll();
+  }
+
+  function getDisplayData() {
+    const subject = getCurrentData();
+    if (mode === 'kelas') {
+      const k = document.getElementById('kelasSelect').value;
+      return [...(subject.kelasData[k] || [])].sort((a, b) => a.nama.localeCompare(b.nama));
+    }
+    const all = [];
+    Object.values(subject.kelasData).forEach(k => all.push(...k));
+    return all.sort((a, b) => a.nama.localeCompare(b.nama));
+  }
+
+  function renderTable(data) {
+    const subject = getCurrentData();
+    const ranked = [...data].sort((a, b) => getValidAverage(b.markah) - getValidAverage(a.markah));
+    const rankMap = {};
+    ranked.forEach((s, i) => rankMap[s.nama + s.kelas] = i + 1);
+
+    let html = `<tr><th style="text-align:left;padding-left:16px;min-width:180px">Nama Pelajar</th><th style="min-width:80px">Kelas</th>`;
+    subject.ujian.forEach((u, i) => {
+      html += `<th style="min-width:110px"><div style="display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 2px">
+        <span>${u}</span>
+        <div style="display:flex;gap:1px;">
+          <button class="icon-btn" onclick="editUjian(${i})" title="Edit ujian" style="padding:2px 3px;font-size:12px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn icon-btn-delete" onclick="deleteUjian(${i})" title="Padam ujian" style="padding:2px 3px;font-size:11px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div></th>`;
+    });
+    html += `<th style="min-width:70px">Purata</th><th style="min-width:60px">Gred</th><th style="min-width:60px">Rank</th><th style="min-width:60px">Tindakan</th></tr>`;
+    document.getElementById('thead').innerHTML = html;
+
+    let body = '';
+    data.forEach(p => {
+      const a = getValidAverage(p.markah);
+      body += `<tr>
+        <td style="text-align:left;padding-left:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+            <span style="font-weight:600">${p.nama}</span>
+            <button class="icon-btn" onclick="editPelajar('${p.kelas}', '${p.nama}')" title="Edit nama" style="padding:2px 4px;font-size:12px;flex-shrink:0">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+        </td>
+        <td style="color:var(--text-muted);font-weight:500">${p.kelas}</td>`;
+      p.markah.forEach((m, j) => {
+        body += `<td class="${warna(num(m))}"><input type="number" value="${Math.round(num(m))}" onchange="updateMark('${p.kelas}', '${p.nama}', ${j}, this.value)" min="0" max="100"></td>`;
+      });
+      body += `<td class="${warna(a)}" style="font-family:'DM Mono',monospace;font-weight:700">${a.toFixed(1)}</td>
+        <td class="${warna(a)}" style="font-weight:800">${gred(a)}</td>
+        <td style="font-weight:700;color:var(--text-muted)">${rankMap[p.nama + p.kelas]}</td>
+        <td><button class="icon-btn icon-btn-delete" onclick="deletePelajar('${p.kelas}', '${p.nama}')" title="Padam pelajar">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button></td></tr>`;
+    });
+
+    let summary = `<tr class="summary-row"><td style="text-align:left;padding-left:16px;font-size:11px;letter-spacing:0.5px;text-transform:uppercase">Rumusan Kelas</td><td>—</td>`;
+    const ujianAvgs = [];
+    subject.ujian.forEach((u, i) => {
+      const validMarks = data.map(p => num(p.markah[i])).filter(m => m > 0);
+      const avg_val = validMarks.length > 0 ? validMarks.reduce((a, b) => a + b, 0) / validMarks.length : 0;
+      ujianAvgs.push(avg_val);
+      summary += `<td style="font-family:'DM Mono',monospace">${avg_val.toFixed(1)}</td>`;
+    });
+    const totalAvg = ujianAvgs.filter(v => v > 0).length > 0
+      ? ujianAvgs.filter(v => v > 0).reduce((a, b) => a + b, 0) / ujianAvgs.filter(v => v > 0).length : 0;
+    summary += `<td class="${warna(totalAvg)}" style="font-family:'DM Mono',monospace;font-weight:800">${totalAvg.toFixed(1)}</td>
+      <td class="${warna(totalAvg)}" style="font-size:16px;font-weight:800">${gred(totalAvg)}</td>
+      <td>—</td><td>—</td></tr>`;
+
+    document.getElementById('tbody').innerHTML = body + summary;
+  }
+
+  function updateMark(k, n, i, v) {
+    const p = getCurrentData().kelasData[k].find(x => x.nama === n);
+    if (p) { p.markah[i] = Math.round(num(v)); renderAll(); if (saveMode === 'auto') saveData(); }
+  }
+
+  function renderAll() {
+    const data = getDisplayData();
+    renderTable(data);
+    renderAnalysis(data);
+  }
+
+  function renderAnalysis(data) {
+    if (data.length === 0) {
+      ['ranking', 'risiko', 'improve', 'decline', 'indeks'].forEach(id => {
+        document.getElementById(id).innerHTML = '<div class="no-data">Tiada data untuk dipaparkan</div>';
+      });
+      document.getElementById('heatmap').innerHTML = '';
+      if (trendChart) { trendChart.destroy(); trendChart = null; }
+      if (gradeChart) { gradeChart.destroy(); gradeChart = null; }
+      return;
+    }
+
+    const ranked = [...data].sort((a, b) => getValidAverage(b.markah) - getValidAverage(a.markah));
+    document.getElementById('ranking').innerHTML = ranked.map((p, i) => {
+      const score = getValidAverage(p.markah);
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+      return `<div class="stat-item">
+        <span class="stat-label" style="display:flex;align-items:center;gap:6px;"><span style="font-size:13px">${medal}</span> ${p.nama} <span style="color:var(--text-light);font-size:11px">(${p.kelas})</span></span>
+        <span class="stat-value">${score.toFixed(1)}</span>
+      </div>`;
+    }).join('');
+
+    renderIndeks();
+
+    const atRisk = data.filter(p => getValidAverage(p.markah) < 40);
+    document.getElementById('risiko').innerHTML = atRisk.length > 0
+      ? atRisk.map(p => `<div class="stat-item"><span class="stat-label">${p.nama} <span style="color:var(--text-light);font-size:11px">(${p.kelas})</span></span><span style="color:var(--danger);font-weight:700;font-family:'DM Mono',monospace">${getValidAverage(p.markah).toFixed(1)}</span></div>`).join('')
+      : '<div class="no-data" style="color:var(--success)">Tiada pelajar berisiko ✓</div>';
+
+    const diffs = data.filter(p => p.markah.length >= 2).map(p => {
+      const validMarks = p.markah.map(m => num(m)).filter(m => m > 0);
+      if (validMarks.length < 2) return null;
+      return { nama: p.nama, kelas: p.kelas, diff: validMarks[validMarks.length - 1] - validMarks[0] };
+    }).filter(d => d !== null);
+
+    const improve = diffs.filter(d => d.diff > 0).sort((a, b) => b.diff - a.diff).slice(0, 5);
+    document.getElementById('improve').innerHTML = improve.length > 0
+      ? improve.map(p => `<div class="stat-item"><span class="stat-label">${p.nama} <span style="color:var(--text-light);font-size:11px">(${p.kelas})</span></span><span style="color:var(--success);font-weight:700;font-family:'DM Mono',monospace">+${p.diff.toFixed(1)}</span></div>`).join('')
+      : '<div class="no-data">Tiada data mencukupi</div>';
+
+    const decline = diffs.filter(d => d.diff < 0).sort((a, b) => a.diff - b.diff).slice(0, 5);
+    document.getElementById('decline').innerHTML = decline.length > 0
+      ? decline.map(p => `<div class="stat-item"><span class="stat-label">${p.nama} <span style="color:var(--text-light);font-size:11px">(${p.kelas})</span></span><span style="color:var(--danger);font-weight:700;font-family:'DM Mono',monospace">${p.diff.toFixed(1)}</span></div>`).join('')
+      : '<div class="no-data">Tiada data mencukupi</div>';
+
+    document.getElementById('heatmap').innerHTML = data.map(p => {
+      const a = getValidAverage(p.markah);
+      return `<div class="heatmap-cell" style="background:${getColor(a)}" title="${p.nama} (${p.kelas}): ${a.toFixed(1)}">
+        <div class="hc-name">${p.nama.split(' ')[0]}</div>
+        <div class="hc-kelas">${p.kelas}</div>
+        <div class="hc-score">${a.toFixed(1)}</div>
+      </div>`;
+    }).join('');
+
+    renderCharts(data);
+  }
+
+  function renderIndeks() {
+    const subject = getCurrentData();
+    let html = '';
+    if (mode === 'kelas') {
+      const k = document.getElementById('kelasSelect').value;
+      const students = subject.kelasData[k] || [];
+      const avgVal = students.length > 0 ? getValidAverage(students.map(p => getValidAverage(p.markah))) : 0;
+      const g = gred(avgVal);
+      const barColor = ['A+', 'A', 'A-'].includes(g) ? 'var(--success)' : ['B+', 'B', 'C+', 'C'].includes(g) ? 'var(--warning)' : 'var(--danger)';
+      html = `<div class="bar-wrapper">
+        <div class="bar-label">Kelas ${k}</div>
+        <div class="bar-container"><div class="bar-fill" style="width:${avgVal}%;background:${barColor}">${avgVal.toFixed(1)} (${g})</div></div>
+      </div>`;
+    } else {
+      Object.keys(subject.kelasData).forEach(k => {
+        const students = subject.kelasData[k] || [];
+        const avgVal = students.length > 0 ? getValidAverage(students.map(p => getValidAverage(p.markah))) : 0;
+        const g = gred(avgVal);
+        const barColor = ['A+', 'A', 'A-'].includes(g) ? 'var(--success)' : ['B+', 'B', 'C+', 'C'].includes(g) ? 'var(--warning)' : 'var(--danger)';
+        html += `<div class="bar-wrapper">
+          <div class="bar-label">Kelas ${k}</div>
+          <div class="bar-container"><div class="bar-fill" style="width:${avgVal}%;background:${barColor}">${avgVal.toFixed(1)} (${g})</div></div>
+        </div>`;
+      });
+    }
+    document.getElementById('indeks').innerHTML = html;
+  }
+
+  // Track last chart data so we can rebuild on type change
+  let lastTrendData = null;
+  let lastGradeData = null;
+
+  function buildTrendOptions(type) {
+    const isPie = type === 'pie';
+    return {
+      responsive: true,
+      plugins: {
+        legend: { display: isPie, position: 'bottom', labels: { font: { size: 11, family: "'Plus Jakarta Sans',sans-serif" } } },
+        datalabels: {
+          color: isPie ? '#fff' : '#0f172a',
+          anchor: isPie ? 'center' : 'end',
+          align: isPie ? 'center' : 'top',
+          font: { weight: 'bold', size: 11 },
+          formatter: (v) => v.toFixed(1)
+        }
+      },
+      scales: isPie ? {} : { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(0,0,0,0.05)' } } }
+    };
+  }
+
+  function buildTrendDataset(type, labels, data) {
+    const isPie = type === 'pie';
+    const pieColors = ['#1a56db','#0ea5e9','#7c3aed','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6'];
+    return {
+      labels,
+      datasets: [{
+        label: 'Purata',
+        data,
+        borderColor: isPie ? undefined : '#1a56db',
+        backgroundColor: isPie
+          ? labels.map((_, i) => pieColors[i % pieColors.length])
+          : type === 'bar' ? 'rgba(26,86,219,0.75)' : 'rgba(26,86,219,0.08)',
+        tension: 0.4,
+        fill: type === 'line',
+        pointRadius: type === 'line' ? 5 : undefined,
+        pointBackgroundColor: type === 'line' ? '#1a56db' : undefined,
+        borderWidth: type === 'line' ? 2.5 : undefined,
+        borderRadius: type === 'bar' ? 5 : undefined,
+        hoverOffset: isPie ? 8 : undefined
+      }]
+    };
+  }
+
+  function buildGradeOptions(type) {
+    const isPie = type === 'pie';
+    return {
+      responsive: true,
+      plugins: {
+        legend: { display: isPie, position: 'bottom', labels: { font: { size: 11, family: "'Plus Jakarta Sans',sans-serif" } } },
+        datalabels: {
+          color: isPie ? '#fff' : '#0f172a',
+          anchor: isPie ? 'center' : 'end',
+          align: isPie ? 'center' : 'top',
+          font: { weight: 'bold', size: 11 },
+          formatter: (v) => v
+        }
+      },
+      scales: isPie ? {} : { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } } }
+    };
+  }
+
+  function buildGradeDataset(type, labels, values, colors) {
+    const isPie = type === 'pie';
+    return {
+      labels,
+      datasets: [{
+        label: 'Bilangan',
+        data: values,
+        backgroundColor: colors,
+        borderRadius: type === 'bar' ? 5 : undefined,
+        borderColor: isPie ? '#fff' : undefined,
+        borderWidth: isPie ? 2 : undefined,
+        hoverOffset: isPie ? 8 : undefined,
+        tension: type === 'line' ? 0.4 : undefined,
+        fill: type === 'line',
+        pointRadius: type === 'line' ? 5 : undefined
+      }]
+    };
+  }
+
+  function changeTrendChart(type) {
+    if (!lastTrendData) return;
+    if (trendChart) { trendChart.destroy(); trendChart = null; }
+    const { labels, data } = lastTrendData;
+    trendChart = new Chart(document.getElementById('trendChart'), {
+      type: type === 'pie' ? 'pie' : type,
+      data: buildTrendDataset(type, labels, data),
+      options: buildTrendOptions(type)
+    });
+  }
+
+  function changeGradeChart(type) {
+    if (!lastGradeData) return;
+    if (gradeChart) { gradeChart.destroy(); gradeChart = null; }
+    const { labels, values, colors } = lastGradeData;
+    gradeChart = new Chart(document.getElementById('gradeChart'), {
+      type: type === 'pie' ? 'pie' : type,
+      data: buildGradeDataset(type, labels, values, colors),
+      options: buildGradeOptions(type)
+    });
+  }
+
+  function renderCharts(data) {
+    const subject = getCurrentData();
+    const trendType = document.getElementById('trendChartType')?.value || 'line';
+    const gradeType = document.getElementById('gradeChartType')?.value || 'bar';
+
+    // ── Trend Chart ──
+    const trendLabels = subject.ujian;
+    const trendData = subject.ujian.map((_, i) => {
+      const validMarks = data.map(p => num(p.markah[i])).filter(m => m > 0);
+      return validMarks.length > 0 ? parseFloat((validMarks.reduce((a, b) => a + b, 0) / validMarks.length).toFixed(1)) : 0;
+    });
+    lastTrendData = { labels: trendLabels, data: trendData };
+
+    if (trendChart) {
+      trendChart.data = buildTrendDataset(trendType, trendLabels, trendData);
+      trendChart.options = buildTrendOptions(trendType);
+      trendChart.update();
+    } else {
+      trendChart = new Chart(document.getElementById('trendChart'), {
+        type: trendType === 'pie' ? 'pie' : trendType,
+        data: buildTrendDataset(trendType, trendLabels, trendData),
+        options: buildTrendOptions(trendType)
+      });
+    }
+
+    // ── Grade Chart ──
+    const gradeCount = {};
+    const gradeOrder = ['A+', 'A', 'A-', 'B+', 'B', 'C+', 'C', 'D', 'E', 'G'];
+    data.forEach(p => { const g = gred(avg(p.markah)); gradeCount[g] = (gradeCount[g] || 0) + 1; });
+    const gradeLabels = gradeOrder.filter(g => gradeCount[g]);
+    const gradeValues = gradeLabels.map(g => gradeCount[g]);
+    const gradeColors = gradeLabels.map(g => {
+      if (['A+', 'A', 'A-'].includes(g)) return '#10b981';
+      if (['B+', 'B'].includes(g)) return '#84cc16';
+      if (['C+', 'C'].includes(g)) return '#f59e0b';
+      if (g === 'D') return '#f97316';
+      return '#ef4444';
+    });
+    lastGradeData = { labels: gradeLabels, values: gradeValues, colors: gradeColors };
+
+    if (gradeChart) {
+      gradeChart.data = buildGradeDataset(gradeType, gradeLabels, gradeValues, gradeColors);
+      gradeChart.options = buildGradeOptions(gradeType);
+      gradeChart.update();
+    } else {
+      gradeChart = new Chart(document.getElementById('gradeChart'), {
+        type: gradeType === 'pie' ? 'pie' : gradeType,
+        data: buildGradeDataset(gradeType, gradeLabels, gradeValues, gradeColors),
+        options: buildGradeOptions(gradeType)
+      });
+    }
+  }
+
+  function getJsPDF() {
+    if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+    if (window.jsPDF) return window.jsPDF;
+    if (window.jspdf) return window.jspdf;
+    throw new Error('jsPDF tidak berjaya dimuatkan.');
+  }
+
+  function safeText(s) {
+    // Strip characters outside latin-1 range that jsPDF default font cannot handle
+    return String(s).replace(/[^\u0000-\u00ff]/g, '?').replace(/—/g, '-').replace(/–/g, '-');
+  }
+
+  function pdfHeader(doc, title1, title2) {
+    doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+    doc.text(safeText(title1), 10, 15);
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text(safeText(title2), 10, 24);
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+    doc.text('Dijana: ' + new Date().toLocaleString('ms-MY'), 10, 30);
+    doc.setLineWidth(0.3);
+    doc.line(10, 33, 200, 33);
+  }
+
+  function importCSV() { document.getElementById('fileInput').click(); }
+
+  function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const subject = getCurrentData();
+      const wb = XLSX.read(evt.target.result, { type: 'binary' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      rows.slice(1).forEach(r => {
+        if (r.length < 2) return;
+        const k = r[0], n = r[1];
+        if (!subject.kelasData[k]) subject.kelasData[k] = [];
+        while (subject.ujian.length < r.length - 2) subject.ujian.push('Ujian ' + (subject.ujian.length + 1));
+        subject.kelasData[k].push({ nama: n, kelas: k, markah: r.slice(2).map(v => Math.round(num(v))) });
+      });
+      updateSelect(); renderAll();
+      if (saveMode === 'auto') saveData();
+      showToast('Import berjaya');
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = '';
+  }
+
+  function pdfKelas() {
+    try {
+      const jsPDF = getJsPDF();
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const subject = getCurrentData();
+      const k = document.getElementById('kelasSelect').value;
+      const data = [...(subject.kelasData[k] || [])].sort((a, b) => avg(b.markah) - avg(a.markah));
+
+      pdfHeader(doc, safeText(currentSubject) + ' - Tahun ' + currentTahun, 'Laporan Kelas ' + k);
+
+      let y = 42;
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text('Bil', 10, y);
+      doc.text('Nama Pelajar', 25, y);
+      doc.text('Purata', 140, y);
+      doc.text('Gred', 162, y);
+      y += 8;
+
+      doc.setFont('helvetica', 'normal');
+      data.forEach((p, i) => {
+        const a = avg(p.markah);
+        doc.setFontSize(9);
+        doc.text(String(i + 1), 10, y);
+        doc.text(safeText(p.nama).substring(0, 35), 25, y);
+        doc.text(a.toFixed(1), 140, y);
+        doc.text(safeText(gred(a)), 162, y);
+        y += 7;
+        if (y > 270) {
+          doc.addPage(); y = 15;
+          doc.setFont('helvetica', 'bold');
+          doc.text('Bil', 10, y); doc.text('Nama Pelajar', 25, y);
+          doc.text('Purata', 140, y); doc.text('Gred', 162, y);
+          y += 8; doc.setFont('helvetica', 'normal');
+        }
+      });
+
+      y += 5; doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+      doc.text('RINGKASAN', 10, y); y += 7;
+      const totalStudents = data.length;
+      const avgAll = totalStudents > 0 ? data.reduce((sum, p) => sum + avg(p.markah), 0) / totalStudents : 0;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text('Jumlah Pelajar: ' + totalStudents, 15, y); y += 5;
+      doc.text('Purata Kelas: ' + avgAll.toFixed(2), 15, y); y += 5;
+      doc.text('Gred Purata: ' + safeText(gred(avgAll)), 15, y);
+
+      doc.save('Laporan_Kelas_' + k + '_' + safeText(currentSubject) + '_' + currentTahun + '.pdf');
+      showToast('PDF Kelas berjaya dimuat turun');
+    } catch(e) { console.error(e); showToast('Ralat PDF: ' + e.message); }
+  }
+
+  function pdfMulti() {
+    try {
+      const jsPDF = getJsPDF();
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const subject = getCurrentData();
+
+      pdfHeader(doc, safeText(currentSubject) + ' - Tahun ' + currentTahun, 'Laporan Semua Kelas');
+
+      let y = 42; let firstPage = true;
+
+      Object.keys(subject.kelasData).forEach(k => {
+        const data = [...subject.kelasData[k]].sort((a, b) => avg(b.markah) - avg(a.markah));
+        if (!firstPage && y > 200) { doc.addPage(); y = 15; }
+        firstPage = false;
+
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+        doc.text('Kelas ' + k, 10, y); y += 7;
+
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.text('Bil', 10, y); doc.text('Nama Pelajar', 25, y);
+        doc.text('Purata', 140, y); doc.text('Gred', 162, y);
+        y += 6;
+
+        doc.setFont('helvetica', 'normal');
+        data.forEach((p, i) => {
+          const a = avg(p.markah);
+          doc.text(String(i + 1), 10, y);
+          doc.text(safeText(p.nama).substring(0, 35), 25, y);
+          doc.text(a.toFixed(1), 140, y);
+          doc.text(safeText(gred(a)), 162, y);
+          y += 6;
+          if (y > 270) { doc.addPage(); y = 15; }
+        });
+        y += 3;
+      });
+
+      doc.save('Laporan_Multi_' + safeText(currentSubject) + '_' + currentTahun + '.pdf');
+      showToast('PDF Multi berjaya dimuat turun');
+    } catch(e) { console.error(e); showToast('Ralat PDF: ' + e.message); }
+  }
+
+  function pdfFull(event) {
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    const origText = btn.innerHTML;
+    btn.innerHTML = 'Menjana...';
+
+    try {
+      const jsPDF = getJsPDF();
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const subject = getCurrentData();
+
+      let y = 20;
+      const pageHeight = 297, margin = 10, contentWidth = 190;
+
+      doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+      doc.text('Laporan Penuh Analisis SPIn', margin + contentWidth / 2, y, { align: 'center' }); y += 10;
+      doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+      doc.text('Subjek: ' + safeText(currentSubject) + '   Tahun: ' + currentTahun, margin + contentWidth / 2, y, { align: 'center' }); y += 5;
+      doc.setFontSize(9);
+      doc.text('Dijana: ' + new Date().toLocaleString('ms-MY'), margin + contentWidth / 2, y, { align: 'center' }); y += 10;
+
+      Object.keys(subject.kelasData).forEach((k) => {
+        const students = [...subject.kelasData[k]].sort((a, b) => avg(b.markah) - avg(a.markah));
+        const avgClass = students.length > 0 ? avg(students.map(p => avg(p.markah))) : 0;
+
+        if (y > pageHeight - 50) { doc.addPage(); y = 20; }
+
+        doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+        doc.text('Kelas ' + k, margin, y); y += 7;
+
+        doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+        doc.setFillColor(26, 86, 219); doc.setTextColor(255, 255, 255);
+        let xPos = margin;
+        doc.rect(xPos, y - 4, 10, 6, 'F'); doc.text('Bil', xPos + 2, y); xPos += 12;
+        doc.rect(xPos, y - 4, 40, 6, 'F'); doc.text('Nama', xPos + 2, y); xPos += 42;
+        subject.ujian.forEach(ujian => {
+          const colWidth = (contentWidth - 52) / subject.ujian.length;
+          doc.rect(xPos, y - 4, colWidth, 6, 'F');
+          doc.text(safeText(ujian).substring(0, 8), xPos + colWidth / 2, y, { align: 'center' });
+          xPos += colWidth;
+        });
+        const colW = (contentWidth - 52) / subject.ujian.length;
+        doc.rect(xPos, y - 4, 15, 6, 'F'); doc.text('Purata', xPos + 2, y); xPos += 17;
+        doc.rect(xPos, y - 4, 12, 6, 'F'); doc.text('Gred', xPos + 2, y);
+        y += 8;
+
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(0, 0, 0);
+        students.forEach((p, i) => {
+          if (y > pageHeight - 15) { doc.addPage(); y = 20; }
+          const a = avg(p.markah);
+          const g = gred(a);
+          if (i % 2 === 0) { doc.setFillColor(249, 250, 251); doc.rect(margin, y - 4, contentWidth, 5, 'F'); }
+          xPos = margin;
+          doc.text(String(i + 1), xPos + 2, y); xPos += 12;
+          doc.text(safeText(p.nama).substring(0, 25), xPos + 2, y); xPos += 42;
+          p.markah.forEach((m) => {
+            const cw = (contentWidth - 52) / subject.ujian.length;
+            doc.text(String(Math.round(num(m))), xPos + cw / 2, y, { align: 'center' });
+            xPos += cw;
+          });
+          doc.text(a.toFixed(1), xPos + 2, y); xPos += 17;
+          doc.text(safeText(g), xPos + 2, y);
+          y += 5;
+        });
+
+        y += 3; doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.setFillColor(240, 244, 255);
+        doc.rect(margin, y - 3, contentWidth, 12, 'F');
+        doc.setTextColor(0, 0, 0);
+        doc.text('Ringkasan ' + k + ':', margin + 2, y); y += 4;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+        doc.text('Jumlah: ' + students.length, margin + 4, y); y += 3;
+        doc.text('Purata: ' + avgClass.toFixed(2) + '   Gred: ' + safeText(gred(avgClass)), margin + 4, y); y += 8;
+      });
+
+      doc.save('Laporan_Penuh_' + safeText(currentSubject) + '_' + currentTahun + '.pdf');
+      showToast('Laporan penuh berjaya dimuat turun');
+    } catch (e) {
+      console.error('PDF error:', e);
+      showToast('Ralat PDF: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+
+    function editGred() {
+    let txt = Object.entries(gradeRange).map(([g, v]) => `${g}:${v}`).join('\n');
+    showModal('Tetapan Gred', 'Format: A+:90\nA:85\nA-:80 dst', 'input', txt).then(input => {
+      if (!input) return;
+      input.split('\n').forEach(line => {
+        const [g, v] = line.split(':');
+        if (g && !isNaN(v)) gradeRange[g.trim()] = Number(v);
+      });
+      saveData(); renderAll();
+    });
+  }
+
+  tryResumeSession();
+</script>
+
+<style>
+.pwd-wrap{position:relative;display:inline-block;width:100%}
+.pwd-wrap input[type=password]{padding-right:36px !important;width:100%;box-sizing:border-box}
+.pwd-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:17px;user-select:none;opacity:.55;line-height:1}
+.pwd-eye:hover{opacity:1}
+</style>
+<script>
+(function(){
+  function wrapPwd(inp){
+    if(inp.dataset.pwdWrapped) return;
+    inp.dataset.pwdWrapped='1';
+    var wrap=document.createElement('span');
+    wrap.className='pwd-wrap';
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    var eye=document.createElement('span');
+    eye.className='pwd-eye';
+    eye.innerHTML='\u{1F441}\uFE0F';
+    eye.onclick=function(){
+      if(inp.type==='password'){inp.type='text';eye.style.opacity='1';}
+      else{inp.type='password';eye.style.opacity='.55';}
+    };
+    wrap.appendChild(eye);
+  }
+  function scan(){
+    document.querySelectorAll('input[type=password]').forEach(wrapPwd);
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', scan);
+  } else { scan(); }
+  new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+</body>
+</html>
