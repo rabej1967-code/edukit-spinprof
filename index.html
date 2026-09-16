@@ -927,7 +927,13 @@
     if (!currentSubject || !subjects[currentSubject]) currentSubject = Object.keys(subjects)[0] || null;
   }
 
-  async function saveData() {
+  var _spSaveDebounceTimer = null;
+  function saveData() {
+    if (_spSaveDebounceTimer) clearTimeout(_spSaveDebounceTimer);
+    _spSaveDebounceTimer = setTimeout(doSaveDataNow, 700);
+  }
+
+  async function doSaveDataNow() {
     allData[currentTahun].subjects = subjects;
     allData[currentTahun].currentSubject = currentSubject;
     var payload = { allData, currentTahun, saveMode };
